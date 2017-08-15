@@ -1,0 +1,56 @@
+#!/bin/bash
+
+exitnum=1
+wrongnum=2
+             
+if [ $# -ne $wrongnum ];then
+   echo "It only need 2 arguments" 1>&2
+   exit $exitnum
+else
+   loop
+fi
+
+loop(){
+ for check in `cat ${1}`;do
+   fileout=${check}.out
+   filein=${check}.in
+   program=$2
+   testinout
+ done
+}
+
+testinout(){
+   if [ ! -r $fileout ];then
+     echo "There are missing or unreadable .out files" 1>&2
+     exit $exitnum
+   elif [ ! -r $filein ];then
+     echo "There are missing or unreadable .in files" 1>&2
+     exit $exitnum
+   else
+     usage
+   fi
+}
+
+usage(){
+  tempo=`mktemp testResult.XXXX`
+  if [ -e ${check}.args ];then
+   if [ ! -r ${check}.args ];then
+      echo "There are missing or unreadable .args file" 1>&2
+      exit $exitnum
+   else
+      $program `cat ${check}.args`<$filein>$tempo
+   fi
+  else
+      $program<$filein>$tempo
+  fi
+  diff $fileout $tempo >/dev/null
+  if [ $? -ne 0 ];then
+    echo "Test failed: $check"
+    echo "Input:"
+    cat $filein
+    echo "Expected:"
+    cat $fileout
+    echo "Actual:"  
+    cat < $tempo
+  fi
+}
